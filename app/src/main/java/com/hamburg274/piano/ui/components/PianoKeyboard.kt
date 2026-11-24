@@ -6,9 +6,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,8 +105,9 @@ fun PianoKeyboard(
     lastNoteName: String?,
     onNoteOn: (midi: Int, finalVel: Int, rawVel: Int) -> Unit,
     onNoteOff: (midi: Int) -> Unit,
-    compactHeight: Boolean,
     fillAvailableHeight: Boolean = false,
+    fixedKeybedHeight: Dp = 156.dp,
+    hideControlRibbon: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val guideMap = remember(guideNotes) {
@@ -117,326 +119,379 @@ fun PianoKeyboard(
     val rangeStartName = PianoTuning.WHITE_KEYS[clampedStart].name
     val rangeEndName = PianoTuning.WHITE_KEYS[(clampedStart + visibleWhiteCount - 1).coerceAtMost(PianoTuning.WHITE_KEY_COUNT - 1)].name
 
-    // Musical dual-manual pairing: Treble stays on main anchor (e.g. C4..E5), Bass sits an octave lower (C3..E4)
-    val trebleStart = clampedStart
-    val bassStart = (clampedStart - 7).coerceIn(0, PianoTuning.WHITE_KEY_COUNT - visibleWhiteCount)
+    // Musical dual-manual pairing: Treble on main range (e.g. C4..C6 or C3..C5), Bass an octave below
+    val trebleStart = (clampedStart + 7).coerceIn(0, PianoTuning.WHITE_KEY_COUNT - visibleWhiteCount)
+    val bassStart = clampedStart
 
-    val fixedKeybedHeight = when {
-        compactHeight && layoutMode == KeyboardLayoutMode.SINGLE -> 186.dp
-        compactHeight -> 252.dp
-        layoutMode == KeyboardLayoutMode.SINGLE -> 244.dp
-        else -> 310.dp
-    }
-
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .background(Color(0xFF131318))
-            .border(width = 0.5.dp, color = BorderHairline)
     ) {
-        // Two-Row Zero-Clipping Keybed Control Header
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(SurfaceCard)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // Row 1: Full-Width 88-Key Interactive Compass + Zoom -/+ + Range Readout
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                IconButton(
-                    onClick = { onViewportChange(clampedStart, (visibleWhiteCount + 2).coerceAtMost(24)) },
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(SurfaceControl)
-                        .testTag("keybed_zoom_out")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ZoomOut,
-                        contentDescription = stringResource(R.string.cd_zoom_out),
-                        tint = MutedStoneText,
-                        modifier = Modifier.size(15.dp)
-                    )
-                }
+        val isWideRibbon = maxWidth >= 600.dp
 
-                OctaveCompassBar(
-                    activeNotes = activeNotes,
-                    startWhiteIndex = clampedStart,
-                    visibleWhiteCount = visibleWhiteCount,
-                    onViewportChange = onViewportChange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(26.dp)
-                        .testTag("octave_compass_bar")
-                )
-
-                IconButton(
-                    onClick = { onViewportChange(clampedStart, (visibleWhiteCount - 2).coerceAtLeast(7)) },
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(SurfaceControl)
-                        .testTag("keybed_zoom_in")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ZoomIn,
-                        contentDescription = stringResource(R.string.cd_zoom_in),
-                        tint = MutedStoneText,
-                        modifier = Modifier.size(15.dp)
-                    )
-                }
-
-                Text(
-                    text = "$rangeStartName–$rangeEndName",
-                    fontFamily = JetBrainsMonoFamily,
-                    fontSize = 10.5.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = ConcertBrass
-                )
-            }
-
-            // Row 2: Layout Mode + Key-Lock + Labels + Una Corda & Sostenuto Pedals (All Visible!)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    // Single / Dual / Duet Switcher
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Ultra-Slim Keybed Control Ribbon (single 32dp row in landscape -> maximizes key height!)
+            if (!hideControlRibbon) {
+                if (isWideRibbon) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(7.dp))
-                            .background(ObsidianBg)
-                            .border(1.dp, BorderHairline, RoundedCornerShape(7.dp))
-                            .padding(2.dp)
+                            .fillMaxWidth()
+                            .background(SurfaceCard)
+                            .border(width = 0.5.dp, color = BorderHairline)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
-                        KeyboardLayoutMode.entries.forEach { mode ->
-                            val selected = layoutMode == mode
-                            Box(
+                        LayoutModeToggle(layoutMode, onLayoutModeChange)
+                        KeyLockChip(keyLock, onKeyLockToggle)
+                        LabelsChip(showLabels, onShowLabelsToggle)
+
+                        // Wide Interactive 88-Key Compass + Zoom
+                        IconButton(
+                            onClick = { onViewportChange(clampedStart, (visibleWhiteCount + 2).coerceAtMost(28)) },
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(SurfaceControl)
+                                .testTag("keybed_zoom_out")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ZoomOut,
+                                contentDescription = stringResource(R.string.cd_zoom_out),
+                                tint = MutedStoneText,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+
+                        OctaveCompassBar(
+                            activeNotes = activeNotes,
+                            startWhiteIndex = clampedStart,
+                            visibleWhiteCount = visibleWhiteCount,
+                            onViewportChange = onViewportChange,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(22.dp)
+                                .testTag("octave_compass_bar")
+                        )
+
+                        IconButton(
+                            onClick = { onViewportChange(clampedStart, (visibleWhiteCount - 2).coerceAtLeast(8)) },
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(SurfaceControl)
+                                .testTag("keybed_zoom_in")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ZoomIn,
+                                contentDescription = stringResource(R.string.cd_zoom_in),
+                                tint = MutedStoneText,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "$rangeStartName–$rangeEndName",
+                            fontFamily = JetBrainsMonoFamily,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = ConcertBrass
+                        )
+
+                        PedalToggleChip(
+                            label = "UC",
+                            engaged = unaCorda,
+                            onClick = onUnaCordaToggle,
+                            tag = "pedal_una_corda"
+                        )
+                        PedalToggleChip(
+                            label = "Sos",
+                            engaged = sostenuto,
+                            onClick = onSostenutoToggle,
+                            tag = "pedal_sostenuto"
+                        )
+                    }
+                } else {
+                    // Compact 2-row fallback if resized to narrow portrait/split-screen
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(SurfaceCard)
+                            .border(width = 0.5.dp, color = BorderHairline)
+                            .padding(horizontal = 8.dp, vertical = 5.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            IconButton(
+                                onClick = { onViewportChange(clampedStart, (visibleWhiteCount + 2).coerceAtMost(24)) },
                                 modifier = Modifier
-                                    .testTag("layout_mode_${mode.name.lowercase()}")
+                                    .size(26.dp)
                                     .clip(RoundedCornerShape(5.dp))
-                                    .background(if (selected) Color(0xFF282833) else Color.Transparent)
-                                    .clickable { onLayoutModeChange(mode) }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                                contentAlignment = Alignment.Center
+                                    .background(SurfaceControl)
+                                    .testTag("keybed_zoom_out")
                             ) {
-                                Text(
-                                    text = mode.label,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (selected) IvoryText else MutedStoneText,
-                                    fontSize = 10.5.sp
-                                )
+                                Icon(Icons.Default.ZoomOut, stringResource(R.string.cd_zoom_out), tint = MutedStoneText, modifier = Modifier.size(14.dp))
+                            }
+                            OctaveCompassBar(
+                                activeNotes = activeNotes,
+                                startWhiteIndex = clampedStart,
+                                visibleWhiteCount = visibleWhiteCount,
+                                onViewportChange = onViewportChange,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(22.dp)
+                                    .testTag("octave_compass_bar")
+                            )
+                            IconButton(
+                                onClick = { onViewportChange(clampedStart, (visibleWhiteCount - 2).coerceAtLeast(7)) },
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .background(SurfaceControl)
+                                    .testTag("keybed_zoom_in")
+                            ) {
+                                Icon(Icons.Default.ZoomIn, stringResource(R.string.cd_zoom_in), tint = MutedStoneText, modifier = Modifier.size(14.dp))
+                            }
+                            Text(
+                                text = "$rangeStartName–$rangeEndName",
+                                fontFamily = JetBrainsMonoFamily,
+                                fontSize = 10.sp,
+                                color = ConcertBrass
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                                LayoutModeToggle(layoutMode, onLayoutModeChange)
+                                KeyLockChip(keyLock, onKeyLockToggle)
+                                LabelsChip(showLabels, onShowLabelsToggle)
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                PedalToggleChip("UC", unaCorda, onUnaCordaToggle, "pedal_una_corda")
+                                PedalToggleChip("Sos", sostenuto, onSostenutoToggle, "pedal_sostenuto")
                             }
                         }
                     }
-
-                    // Key-Lock vs Glissando
-                    Row(
-                        modifier = Modifier
-                            .testTag("key_lock_toggle")
-                            .clip(RoundedCornerShape(7.dp))
-                            .background(if (keyLock) SurfaceSelected else SurfaceControl)
-                            .border(
-                                1.dp,
-                                if (keyLock) ConcertBrass.copy(alpha = 0.45f) else BorderHairline,
-                                RoundedCornerShape(7.dp)
-                            )
-                            .clickable { onKeyLockToggle() }
-                            .padding(horizontal = 7.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (keyLock) Icons.Default.Lock else Icons.Default.OpenWith,
-                            contentDescription = stringResource(if (keyLock) R.string.keybed_key_lock else R.string.keybed_glissando),
-                            tint = if (keyLock) ConcertBrassBright else MutedStoneText,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = if (keyLock) "Lock" else "Gliss",
-                            fontSize = 10.5.sp,
-                            color = if (keyLock) ConcertBrassBright else MutedStoneText,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    // Note Labels toggle
-                    Box(
-                        modifier = Modifier
-                            .testTag("note_labels_toggle")
-                            .clip(RoundedCornerShape(7.dp))
-                            .background(if (showLabels) Color(0xFF282833) else SurfaceControl)
-                            .border(1.dp, BorderHairline, RoundedCornerShape(7.dp))
-                            .clickable { onShowLabelsToggle() }
-                            .padding(horizontal = 7.dp, vertical = 5.dp)
-                    ) {
-                        Text(
-                            text = "C4",
-                            fontFamily = JetBrainsMonoFamily,
-                            fontSize = 10.5.sp,
-                            color = if (showLabels) IvoryText else MutedStoneText
-                        )
-                    }
-                }
-
-                // Right-aligned Una Corda & Sostenuto Pedals (always immediately reachable)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    PedalToggleChip(
-                        label = "UC",
-                        engaged = unaCorda,
-                        onClick = onUnaCordaToggle,
-                        tag = "pedal_una_corda"
-                    )
-                    PedalToggleChip(
-                        label = "Sos",
-                        engaged = sostenuto,
-                        onClick = onSostenutoToggle,
-                        tag = "pedal_sostenuto"
-                    )
                 }
             }
-        }
 
-        // Main Keybed + Thumb Vertical-Slide Continuous Sustain Pedal (CC64)
-        Row(
-            modifier = if (fillAvailableHeight) {
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            } else {
-                Modifier
-                    .fillMaxWidth()
-                    .height(fixedKeybedHeight)
-            }
-        ) {
-            // Left Vertical-Slide Half-Pedal Column (CC64 0..127)
-            VerticalSustainPedal(
-                damperCC64 = damperCC64,
-                damperPct = damperPct,
-                onDamperChange = onDamperChange,
-                modifier = Modifier
-                    .width(46.dp)
-                    .fillMaxHeight()
-                    .testTag("sustain_cc64_slider")
-            )
-
-            // Key Rows
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
+            // Main Edge-to-Edge Keybed + Left Continuous CC64 Half-Pedal Column
+            Row(
+                modifier = if (fillAvailableHeight) {
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .height(fixedKeybedHeight)
+                }
             ) {
-                when (layoutMode) {
-                    KeyboardLayoutMode.SINGLE -> {
-                        KeyRowCanvas(
-                            startWhite = clampedStart,
-                            whiteCount = visibleWhiteCount,
-                            flipped = false,
-                            activeNotes = activeNotes,
-                            guideMap = guideMap,
-                            showLabels = showLabels,
-                            keyLock = keyLock,
-                            touchVelocityMode = touchVelocityMode,
-                            fixedVelocity = fixedVelocity,
-                            velocityCurve = velocityCurve,
-                            onNoteOn = onNoteOn,
-                            onNoteOff = onNoteOff,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("piano_keybed_single")
-                        )
-                    }
-                    KeyboardLayoutMode.DUAL -> {
-                        KeyRowCanvas(
-                            startWhite = trebleStart,
-                            whiteCount = visibleWhiteCount,
-                            flipped = false,
-                            activeNotes = activeNotes,
-                            guideMap = guideMap,
-                            showLabels = showLabels,
-                            keyLock = keyLock,
-                            touchVelocityMode = touchVelocityMode,
-                            fixedVelocity = fixedVelocity,
-                            velocityCurve = velocityCurve,
-                            onNoteOn = onNoteOn,
-                            onNoteOff = onNoteOff,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .testTag("piano_keybed_treble")
-                        )
-                        KeyRowCanvas(
-                            startWhite = bassStart,
-                            whiteCount = visibleWhiteCount,
-                            flipped = false,
-                            activeNotes = activeNotes,
-                            guideMap = guideMap,
-                            showLabels = showLabels,
-                            keyLock = keyLock,
-                            touchVelocityMode = touchVelocityMode,
-                            fixedVelocity = fixedVelocity,
-                            velocityCurve = velocityCurve,
-                            onNoteOn = onNoteOn,
-                            onNoteOff = onNoteOff,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .testTag("piano_keybed_bass")
-                        )
-                    }
-                    KeyboardLayoutMode.DUET -> {
-                        KeyRowCanvas(
-                            startWhite = trebleStart,
-                            whiteCount = visibleWhiteCount,
-                            flipped = true,
-                            activeNotes = activeNotes,
-                            guideMap = guideMap,
-                            showLabels = showLabels,
-                            keyLock = keyLock,
-                            touchVelocityMode = touchVelocityMode,
-                            fixedVelocity = fixedVelocity,
-                            velocityCurve = velocityCurve,
-                            onNoteOn = onNoteOn,
-                            onNoteOff = onNoteOff,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .testTag("piano_keybed_duet_top")
-                        )
-                        KeyRowCanvas(
-                            startWhite = bassStart,
-                            whiteCount = visibleWhiteCount,
-                            flipped = false,
-                            activeNotes = activeNotes,
-                            guideMap = guideMap,
-                            showLabels = showLabels,
-                            keyLock = keyLock,
-                            touchVelocityMode = touchVelocityMode,
-                            fixedVelocity = fixedVelocity,
-                            velocityCurve = velocityCurve,
-                            onNoteOn = onNoteOn,
-                            onNoteOff = onNoteOff,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .testTag("piano_keybed_duet_bottom")
-                        )
+                VerticalSustainPedal(
+                    damperCC64 = damperCC64,
+                    damperPct = damperPct,
+                    onDamperChange = onDamperChange,
+                    modifier = Modifier
+                        .width(44.dp)
+                        .fillMaxHeight()
+                        .testTag("sustain_cc64_slider")
+                )
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    when (layoutMode) {
+                        KeyboardLayoutMode.SINGLE -> {
+                            KeyRowCanvas(
+                                startWhite = clampedStart,
+                                whiteCount = visibleWhiteCount,
+                                flipped = false,
+                                activeNotes = activeNotes,
+                                guideMap = guideMap,
+                                showLabels = showLabels,
+                                keyLock = keyLock,
+                                touchVelocityMode = touchVelocityMode,
+                                fixedVelocity = fixedVelocity,
+                                velocityCurve = velocityCurve,
+                                onNoteOn = onNoteOn,
+                                onNoteOff = onNoteOff,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .testTag("piano_keybed_single")
+                            )
+                        }
+                        KeyboardLayoutMode.DUAL -> {
+                            KeyRowCanvas(
+                                startWhite = trebleStart,
+                                whiteCount = visibleWhiteCount,
+                                flipped = false,
+                                activeNotes = activeNotes,
+                                guideMap = guideMap,
+                                showLabels = showLabels,
+                                keyLock = keyLock,
+                                touchVelocityMode = touchVelocityMode,
+                                fixedVelocity = fixedVelocity,
+                                velocityCurve = velocityCurve,
+                                onNoteOn = onNoteOn,
+                                onNoteOff = onNoteOff,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .testTag("piano_keybed_treble")
+                            )
+                            KeyRowCanvas(
+                                startWhite = bassStart,
+                                whiteCount = visibleWhiteCount,
+                                flipped = false,
+                                activeNotes = activeNotes,
+                                guideMap = guideMap,
+                                showLabels = showLabels,
+                                keyLock = keyLock,
+                                touchVelocityMode = touchVelocityMode,
+                                fixedVelocity = fixedVelocity,
+                                velocityCurve = velocityCurve,
+                                onNoteOn = onNoteOn,
+                                onNoteOff = onNoteOff,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .testTag("piano_keybed_bass")
+                            )
+                        }
+                        KeyboardLayoutMode.DUET -> {
+                            KeyRowCanvas(
+                                startWhite = trebleStart,
+                                whiteCount = visibleWhiteCount,
+                                flipped = true,
+                                activeNotes = activeNotes,
+                                guideMap = guideMap,
+                                showLabels = showLabels,
+                                keyLock = keyLock,
+                                touchVelocityMode = touchVelocityMode,
+                                fixedVelocity = fixedVelocity,
+                                velocityCurve = velocityCurve,
+                                onNoteOn = onNoteOn,
+                                onNoteOff = onNoteOff,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .testTag("piano_keybed_duet_top")
+                            )
+                            KeyRowCanvas(
+                                startWhite = bassStart,
+                                whiteCount = visibleWhiteCount,
+                                flipped = false,
+                                activeNotes = activeNotes,
+                                guideMap = guideMap,
+                                showLabels = showLabels,
+                                keyLock = keyLock,
+                                touchVelocityMode = touchVelocityMode,
+                                fixedVelocity = fixedVelocity,
+                                velocityCurve = velocityCurve,
+                                onNoteOn = onNoteOn,
+                                onNoteOff = onNoteOff,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .testTag("piano_keybed_duet_bottom")
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LayoutModeToggle(
+    layoutMode: KeyboardLayoutMode,
+    onLayoutModeChange: (KeyboardLayoutMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(ObsidianBg)
+            .border(1.dp, BorderHairline, RoundedCornerShape(6.dp))
+            .padding(2.dp)
+    ) {
+        KeyboardLayoutMode.entries.forEach { mode ->
+            val selected = layoutMode == mode
+            Box(
+                modifier = Modifier
+                    .testTag("layout_mode_${mode.name.lowercase()}")
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(if (selected) Color(0xFF282833) else Color.Transparent)
+                    .clickable { onLayoutModeChange(mode) }
+                    .padding(horizontal = 7.dp, vertical = 3.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = mode.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) IvoryText else MutedStoneText,
+                    fontSize = 10.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun KeyLockChip(keyLock: Boolean, onKeyLockToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .testTag("key_lock_toggle")
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (keyLock) SurfaceSelected else SurfaceControl)
+            .border(1.dp, if (keyLock) ConcertBrass.copy(alpha = 0.45f) else BorderHairline, RoundedCornerShape(6.dp))
+            .clickable { onKeyLockToggle() }
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Icon(
+            imageVector = if (keyLock) Icons.Default.Lock else Icons.Default.OpenWith,
+            contentDescription = stringResource(if (keyLock) R.string.keybed_key_lock else R.string.keybed_glissando),
+            tint = if (keyLock) ConcertBrassBright else MutedStoneText,
+            modifier = Modifier.size(11.dp)
+        )
+        Text(
+            text = if (keyLock) "Lock" else "Gliss",
+            fontSize = 10.sp,
+            color = if (keyLock) ConcertBrassBright else MutedStoneText,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun LabelsChip(showLabels: Boolean, onShowLabelsToggle: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .testTag("note_labels_toggle")
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (showLabels) Color(0xFF282833) else SurfaceControl)
+            .border(1.dp, BorderHairline, RoundedCornerShape(6.dp))
+            .clickable { onShowLabelsToggle() }
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = "C4",
+            fontFamily = JetBrainsMonoFamily,
+            fontSize = 10.sp,
+            color = if (showLabels) IvoryText else MutedStoneText
+        )
     }
 }
 
@@ -450,20 +505,16 @@ private fun PedalToggleChip(
     Box(
         modifier = Modifier
             .testTag(tag)
-            .clip(RoundedCornerShape(7.dp))
+            .clip(RoundedCornerShape(6.dp))
             .background(if (engaged) Color(0xFF2C2416) else SurfaceControl)
-            .border(
-                1.dp,
-                if (engaged) ConcertBrass else BorderHairline,
-                RoundedCornerShape(7.dp)
-            )
+            .border(1.dp, if (engaged) ConcertBrass else BorderHairline, RoundedCornerShape(6.dp))
             .clickable { onClick() }
-            .padding(horizontal = 8.dp, vertical = 5.dp)
+            .padding(horizontal = 7.dp, vertical = 4.dp)
     ) {
         Text(
             text = label,
             fontFamily = JetBrainsMonoFamily,
-            fontSize = 10.5.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
             color = if (engaged) ConcertBrassBright else MutedStoneText
         )
@@ -511,7 +562,6 @@ private fun OctaveCompassBar(
                 size = Size((wkW - 0.5f).coerceAtLeast(1f), size.height)
             )
         }
-        // Subtle black key silhouettes on compass for instant octave orientation
         PianoTuning.BLACK_KEYS.forEach { bk ->
             val bx = (bk.whiteIndex + 1) * wkW - wkW * 0.34f
             drawRect(
@@ -532,7 +582,7 @@ private fun OctaveCompassBar(
             color = ConcertBrassBright,
             topLeft = Offset(left + 1f, 1f),
             size = Size((width - 2f).coerceAtLeast(2f), size.height - 2f),
-            style = Stroke(width = 1.8.dp.toPx())
+            style = Stroke(width = 1.6.dp.toPx())
         )
     }
 }
@@ -549,22 +599,22 @@ private fun VerticalSustainPedal(
         modifier = modifier
             .background(Color(0xFF141419))
             .border(width = 0.5.dp, color = BorderHairline)
-            .padding(vertical = 8.dp, horizontal = 5.dp),
+            .padding(vertical = 6.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = stringResource(R.string.keybed_cc64),
             fontFamily = JetBrainsMonoFamily,
-            fontSize = 9.sp,
+            fontSize = 8.5.sp,
             color = MutedStoneText
         )
 
         Canvas(
             modifier = Modifier
                 .weight(1f)
-                .width(26.dp)
-                .padding(vertical = 6.dp)
+                .width(24.dp)
+                .padding(vertical = 5.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(Color(0xFF0A0A0D))
                 .border(1.dp, BorderHairline, RoundedCornerShape(6.dp))
@@ -583,14 +633,12 @@ private fun VerticalSustainPedal(
                 }
         ) {
             val fillH = (damperCC64 / 127f) * size.height
-            // Half-pedal 50% mark
             drawLine(
                 color = ConcertBrass.copy(alpha = 0.4f),
                 start = Offset(0f, size.height * 0.5f),
                 end = Offset(size.width, size.height * 0.5f),
                 strokeWidth = 1.dp.toPx()
             )
-            // Brass fill bar
             if (fillH > 0f) {
                 drawRect(
                     brush = Brush.verticalGradient(listOf(ConcertBrassDeep, ConcertBrass)),
@@ -598,7 +646,6 @@ private fun VerticalSustainPedal(
                     size = Size(size.width, fillH)
                 )
             }
-            // Ivory thumb handle
             val handleY = (fillH - 4.5.dp.toPx()).coerceIn(0f, size.height - 9.dp.toPx())
             drawRoundRect(
                 color = IvoryText,
@@ -613,12 +660,12 @@ private fun VerticalSustainPedal(
                 .testTag("sustain_toggle_tap")
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { onDamperChange(if (damperCC64 >= 64) 0 else 127) }
-                .padding(horizontal = 2.dp, vertical = 2.dp)
+                .padding(horizontal = 2.dp, vertical = 1.dp)
         ) {
             Text(
                 text = "$damperPct%",
                 fontFamily = JetBrainsMonoFamily,
-                fontSize = 10.sp,
+                fontSize = 9.5.sp,
                 color = ConcertBrass
             )
         }
@@ -759,11 +806,10 @@ private fun KeyRowCanvas(
             val textPaint = android.graphics.Paint().apply {
                 isAntiAlias = true
                 textAlign = android.graphics.Paint.Align.CENTER
-                textSize = (whiteW * 0.27f).coerceIn(19f, 32f)
+                textSize = (whiteW * 0.26f).coerceIn(18f, 30f)
                 typeface = android.graphics.Typeface.MONOSPACE
             }
 
-            // Draw Ivory White Keys with subtle top shadow & front ivory lip bevel
             visibleWhites.forEachIndexed { idx, wk ->
                 val x = idx * whiteW
                 val isPressed = wk.midi in activeNotes
@@ -785,7 +831,6 @@ private fun KeyRowCanvas(
                     cornerRadius = corner
                 )
 
-                // Subtle front key lip bevel when unpressed
                 if (!isPressed) {
                     drawRoundRect(
                         color = Color(0xFFCEC6B7),
@@ -795,12 +840,11 @@ private fun KeyRowCanvas(
                     )
                 }
 
-                // Guide dot
                 if (guide != null && !isPressed) {
                     drawCircle(
                         color = if (guide == HandPart.RH) Color(0xFFB38632) else LeftHandBlue,
                         radius = 4.5.dp.toPx(),
-                        center = Offset(x + whiteW * 0.5f, size.height - 30.dp.toPx())
+                        center = Offset(x + whiteW * 0.5f, size.height - 28.dp.toPx())
                     )
                 }
 
@@ -820,7 +864,6 @@ private fun KeyRowCanvas(
                 }
             }
 
-            // Draw Ebony Black Keys with realistic bevel & specular face
             visibleBlacks.forEach { bk ->
                 val localIdx = bk.whiteIndex - clampedStart
                 val left = (localIdx + 1) * whiteW - blackW * 0.5f
@@ -834,7 +877,6 @@ private fun KeyRowCanvas(
                     else -> Brush.verticalGradient(listOf(Color(0xFF2D2D36), Color(0xFF17171C), Color(0xFF0A0A0D)))
                 }
 
-                // Cast shadow onto ivory keys
                 drawRoundRect(
                     color = Color.Black.copy(alpha = 0.42f),
                     topLeft = Offset(left + 2.5f, 3f),
@@ -848,7 +890,6 @@ private fun KeyRowCanvas(
                     size = Size(blackW, blackH - topOff),
                     cornerRadius = corner
                 )
-                // Inner ebony top-face highlight
                 drawRoundRect(
                     color = Color.White.copy(alpha = if (isPressed) 0.16f else 0.09f),
                     topLeft = Offset(left + 2.dp.toPx(), topOff + 2.dp.toPx()),

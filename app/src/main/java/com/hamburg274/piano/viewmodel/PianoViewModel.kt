@@ -75,6 +75,8 @@ data class GuideNoteHighlight(
 data class PianoUiState(
     val activeTab: WorkspaceTab = WorkspaceTab.STAGE,
     val soundModuleMode: Boolean = false,
+    val zenKeybedMode: Boolean = false,
+    val stageMixerExpanded: Boolean = false,
     val keepScreenOn: Boolean = true,
 
     // Acoustics & Velocity
@@ -83,9 +85,9 @@ data class PianoUiState(
     val fixedVelocity: Int = 82,
     val velocityCurve: List<VelocityCurvePoint> = VelocityEngine.PRESETS.first().points,
 
-    // Keybed Ergonomics (Default C4..E5 = 10 generous playable white keys on phones)
-    val startWhiteIndex: Int = 23,
-    val visibleWhiteCount: Int = 10,
+    // Keybed Ergonomics (Default landscape: C3..C5 = 15 full-sized white keys, 2+ octaves)
+    val startWhiteIndex: Int = 16,
+    val visibleWhiteCount: Int = 15,
     val layoutMode: KeyboardLayoutMode = KeyboardLayoutMode.SINGLE,
     val keyLock: Boolean = true,
     val showLabels: Boolean = true,
@@ -250,7 +252,13 @@ class PianoViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectTab(tab: WorkspaceTab) {
-        _uiState.update { it.copy(activeTab = tab, statusBanner = null) }
+        _uiState.update {
+            it.copy(
+                activeTab = tab,
+                zenKeybedMode = if (tab != WorkspaceTab.STAGE) false else it.zenKeybedMode,
+                statusBanner = null
+            )
+        }
     }
 
     fun setSoundModuleMode(enabled: Boolean) {
@@ -260,6 +268,14 @@ class PianoViewModel(application: Application) : AndroidViewModel(application) {
                 diagnostics = engine.getDiagnostics()
             )
         }
+    }
+
+    fun toggleZenKeybedMode() {
+        _uiState.update { it.copy(zenKeybedMode = !it.zenKeybedMode, stageMixerExpanded = false) }
+    }
+
+    fun toggleStageMixer() {
+        _uiState.update { it.copy(stageMixerExpanded = !it.stageMixerExpanded) }
     }
 
     fun toggleKeepScreenOn() {
@@ -296,12 +312,12 @@ class PianoViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(startWhiteIndex = start, visibleWhiteCount = count) }
     }
 
-    fun syncResponsiveKeyCount(isExpandedWidth: Boolean) {
+    fun syncResponsiveKeyCount(isLandscapeOrWide: Boolean) {
         _uiState.update { st ->
-            if (isExpandedWidth && st.visibleWhiteCount < 14) {
-                st.copy(visibleWhiteCount = 15, startWhiteIndex = 16) // C3..C5 on tablets
-            } else if (!isExpandedWidth && st.visibleWhiteCount > 13) {
-                st.copy(visibleWhiteCount = 10, startWhiteIndex = 23) // C4..E5 on phones
+            if (isLandscapeOrWide && st.visibleWhiteCount < 14) {
+                st.copy(visibleWhiteCount = 15, startWhiteIndex = 16) // C3..C5 (2+ octaves in landscape)
+            } else if (!isLandscapeOrWide && st.visibleWhiteCount > 13) {
+                st.copy(visibleWhiteCount = 10, startWhiteIndex = 23) // C4..E5 in narrow split-screen
             } else {
                 st
             }

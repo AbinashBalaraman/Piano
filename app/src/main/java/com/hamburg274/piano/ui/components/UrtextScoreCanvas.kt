@@ -112,8 +112,8 @@ fun UrtextScoreCanvas(
                     .fillMaxWidth()
             } else {
                 Modifier
+                    .weight(0.56f)
                     .fillMaxWidth()
-                    .height(148.dp)
             }
 
             Column(
