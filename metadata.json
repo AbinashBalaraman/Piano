@@ -1,0 +1,6 @@
+{
+  "name": "Hamburg 274",
+  "description": "Concert-grade classical grand piano workstation for Android with 48 kHz low-latency hybrid acoustic DSP synthesis, Railsback stretched tuning, continuous half-pedaling, Urtext score practice, and studio MIDI/24-bit WAV recording.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

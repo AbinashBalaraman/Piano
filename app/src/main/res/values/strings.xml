@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hamburg 274</string>
+    <string name="app_subtitle">274 cm Concert Grand · 48 kHz Hybrid Acoustic DSP · Offline Ready</string>
+
+    <!-- Workspace Navigation -->
+    <string name="nav_stage">Stage</string>
+    <string name="nav_practice">Practice</string>
+    <string name="nav_acoustics">Acoustics</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_android_midi">MIDI</string>
+
+    <!-- Stage Controls -->
+    <string name="stage_sounding_notes">Sounding Notes</string>
+    <string name="stage_dynamic_contour">Dynamic Contour</string>
+    <string name="stage_three_pedal">Three-Pedal State</string>
+    <string name="stage_tuning_space">Tuning &amp; Space</string>
+    <string name="stage_master_gain">Gain</string>
+    <string name="stage_duplex_resonance">Duplex</string>
+    <string name="stage_record">Record</string>
+    <string name="stage_stop_rec">Stop Rec</string>
+    <string name="stage_urtext_score">Score</string>
+    <string name="stage_voicing_dsp">Voicing</string>
+    <string name="stage_touch_tip">Touch near the rosewood felt for ppp and toward the front ivory lip for fff.</string>
+
+    <!-- Keybed & Pedals -->
+    <string name="keybed_layout_single">Single</string>
+    <string name="keybed_layout_dual">Dual</string>
+    <string name="keybed_layout_duet">Duet</string>
+    <string name="keybed_key_lock">Key-Lock</string>
+    <string name="keybed_glissando">Glissando</string>
+    <string name="keybed_note_labels">Labels</string>
+    <string name="keybed_una_corda">Una Corda</string>
+    <string name="keybed_sostenuto">Sostenuto</string>
+    <string name="keybed_cc64">CC64</string>
+    <string name="cd_zoom_in">Zoom in keyboard keys</string>
+    <string name="cd_zoom_out">Zoom out keyboard keys</string>
+
+    <!-- Practice -->
+    <string name="practice_import_score">Import MIDI / XML</string>
+    <string name="practice_play">Play</string>
+    <string name="practice_pause">Pause</string>
+    <string name="practice_restart">Restart piece</string>
+    <string name="practice_smart_wait">Smart Wait</string>
+    <string name="practice_hand_both">Both</string>
+    <string name="practice_hand_rh">RH</string>
+    <string name="practice_hand_lh">LH</string>
+    <string name="practice_view_urtext">Urtext</string>
+    <string name="practice_view_split">Split</string>
+    <string name="practice_view_waterfall">Waterfall</string>
+    <string name="practice_4d_grade">4D Grade</string>
+    <string name="practice_auto_ramp">Auto-Ramp +5%</string>
+    <string name="practice_ab_loop">A–B Loop</string>
+    <string name="practice_expressive_grading">Expressive Grading</string>
+    <string name="practice_close">Close</string>
+
+    <!-- Acoustics -->
+    <string name="acoustics_voicing_title">Instrument Voicing</string>
+    <string name="acoustics_voicing_subtitle">Hybrid acoustic DSP models with continuous velocity-to-timbre shading.</string>
+    <string name="acoustics_resonance_title">Resonance &amp; Hall Space</string>
+    <string name="acoustics_resonance_subtitle">Diaphragmatic Sitka spruce body, rear duplex aliquots, and hall reverb.</string>
+    <string name="acoustics_duplex_hint">Dial back for crisp Mozart/Brahms clarity; open up for Chopin &amp; Debussy shimmer.</string>
+    <string name="acoustics_action_noise">Hammer &amp; Damper Action Noise</string>
+    <string name="acoustics_lid_position">Lid Position</string>
+    <string name="acoustics_perspective">Perspective</string>
+    <string name="acoustics_hall_ir">Concert Hall Space</string>
+    <string name="acoustics_temperament">Tuning &amp; Historical Temperament</string>
+    <string name="acoustics_touch_title">Touch &amp; Velocity Response</string>
+    <string name="acoustics_touch_subtitle">Three-mode expressive glass velocity engine + 5-point custom MIDI curve.</string>
+    <string name="acoustics_velocity_curve_title">5-Point Custom Velocity Curve</string>
+
+    <!-- Studio -->
+    <string name="studio_title">Studio Recorder &amp; Non-Destructive Re-Voice</string>
+    <string name="studio_subtitle">Captures true finger Note-On/Off durations separately from continuous CC64, CC66, and CC67 pedal lanes.</string>
+    <string name="studio_record_btn">Record Performance</string>
+    <string name="studio_stop_btn">Stop &amp; Save Take</string>
+    <string name="studio_audition">Audition</string>
+    <string name="studio_stop">Stop</string>
+    <string name="studio_export_mid">Export .mid</string>
+    <string name="studio_export_wav">24-bit WAV</string>
+    <string name="studio_rendering">Rendering…</string>
+    <string name="studio_delete_take">Delete recorded take</string>
+
+    <!-- Android & MIDI -->
+    <string name="midi_title">USB OTG &amp; Bluetooth LE MIDI</string>
+    <string name="midi_subtitle">Native Android MidiManager with strict Note-Off (0x8n &amp; vel=0), continuous CC64, CC66, CC67, and CC120/123 panic.</string>
+    <string name="midi_rescan">Rescan MIDI Devices</string>
+    <string name="midi_panic">MIDI Panic (All Notes Off)</string>
+    <string name="diag_3finger_title">Android 3-Finger Chord Diagnostic</string>
+    <string name="diag_3finger_subtitle">Xiaomi (HyperOS/MIUI), OnePlus, OPPO, and realme often intercept 3-finger touches for screenshots, breaking triads.</string>
+    <string name="diag_3finger_passed">3-Finger Triad Verified</string>
+    <string name="diag_3finger_passed_desc">Simultaneous chord input passed without OS gesture interception.</string>
+    <string name="diag_3finger_warning">Touch Cancellation Detected (OEM 3-Finger Gesture)</string>
+    <string name="diag_3finger_warning_desc">Open Android Settings → Additional Settings → Gesture Shortcuts → Take a Screenshot and disable 3-finger screenshot.</string>
+    <string name="diag_open_settings">Open System Settings</string>
+    <string name="diag_reset">Reset Test</string>
+    <string name="pro_audio_title">Pro Audio Diagnostics &amp; Sound-Module</string>
+    <string name="pro_audio_subtitle">Native hardware clock alignment (48 kHz low-latency path) and battery-saving OLED sound-module mode.</string>
+    <string name="pro_audio_latency_tip">Latency Tip: Legacy Bluetooth A2DP headphones add 60–250 ms of lag. For sub-15 ms concert feel on Android, use wired headphones, a USB-C DAC, or Bluetooth LE Audio (LC3).</string>
+    <string name="sound_module_enter">OLED Screen-Off Sound-Module Mode</string>
+    <string name="sound_module_exit">Exit Sound-Module Mode</string>
+    <string name="keep_screen_on">Keep Screen On</string>
+    <string name="screen_awake_locked">Screen Awake Locked</string>
+    <string name="editions_title">Editions &amp; Offline Sound Packs</string>
+    <string name="editions_subtitle">Zero mid-play ads, zero invasive permissions, and a permanent one-time buyout option.</string>
+    <string name="privacy_badge">100% offline DSP synthesis · Zero microphone, camera, or call-log permissions requested.</string>
+</resources>
