@@ -49,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -80,6 +82,9 @@ import com.hamburg274.piano.ui.components.PracticePanel
 import com.hamburg274.piano.ui.components.SoundModuleOverlay
 import com.hamburg274.piano.ui.components.StageQuickMixerStrip
 import com.hamburg274.piano.ui.components.StudioPanel
+import com.hamburg274.piano.ui.components.UpdatePromptDialog
+import com.hamburg274.piano.update.PlayUpdateController
+import kotlinx.coroutines.delay
 import com.hamburg274.piano.ui.theme.BorderHairline
 import com.hamburg274.piano.ui.theme.ConcertBrass
 import com.hamburg274.piano.ui.theme.ConcertBrassBright
@@ -158,6 +163,25 @@ private fun WorkspaceTab.icon(): ImageVector = when (this) {
 @Composable
 fun Hamburg274App(viewModel: PianoViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // Google Play In-App Update Controller (checks asynchronously after initial paint)
+    val updateController = remember { PlayUpdateController(context) }
+    val updateState by updateController.state.collectAsStateWithLifecycle()
+
+    val updateFlowLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { /* InstallStateUpdatedListener handles flexible update download & completion */ }
+
+    DisposableEffect(updateController) {
+        updateController.register()
+        onDispose { updateController.unregister() }
+    }
+
+    LaunchedEffect(updateController) {
+        delay(1500)
+        updateController.checkForUpdates(manual = false)
+    }
 
     // Pending SAF Export State
     var pendingMidiTake by remember { mutableStateOf<StudioTake?>(null) }
@@ -640,7 +664,10 @@ fun Hamburg274App(viewModel: PianoViewModel) {
                                     diagnostics = state.diagnostics,
                                     keepScreenOn = state.keepScreenOn,
                                     onToggleKeepScreenOn = viewModel::toggleKeepScreenOn,
-                                    onEnterSoundModuleMode = { viewModel.setSoundModuleMode(true) }
+                                    onEnterSoundModuleMode = { viewModel.setSoundModuleMode(true) },
+                                    isCheckingUpdate = updateState.isChecking,
+                                    updateStatusMessage = updateState.statusMessage,
+                                    onCheckForUpdates = { updateController.checkForUpdates(manual = true) }
                                 )
                             }
 
@@ -719,6 +746,13 @@ fun Hamburg274App(viewModel: PianoViewModel) {
                     )
                 }
             }
+            // Google Play In-App Update brand-matched modal overlay
+            UpdatePromptDialog(
+                state = updateState,
+                onUpdateNow = { updateController.startFlexibleUpdate(updateFlowLauncher) },
+                onViewInStore = { updateController.openPlayStoreListing() },
+                onLater = { updateController.dismissForCooldown() }
+            )
         }
     }
 }

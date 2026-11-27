@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — Hamburg 274</title>
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --surface: #16161c;
+      --border: rgba(255, 255, 255, 0.1);
+      --brass: #c9a45c;
+      --text: #f5f1e8;
+      --muted: #a6a198;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 16px 48px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 2rem;
+      color: var(--text);
+    }
+    .meta {
+      color: var(--brass);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    h2 {
+      margin-top: 26px;
+      font-size: 1.15rem;
+      color: var(--brass);
+    }
+    p, li { color: #dcd7cc; font-size: 0.96rem; }
+    ul { padding-left: 20px; }
+    a { color: var(--brass); }
+    .badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(100, 196, 139, 0.1);
+      border: 1px solid rgba(100, 196, 139, 0.35);
+      color: #64c48b;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Privacy Policy</h1>
+    <div class="meta">Hamburg 274 (com.hamburg274.piano) &middot; Last updated: November 24, 2026</div>
+    <div class="badge">100% Offline Audio Synthesis &middot; Zero Personal Data Collected &middot; Zero Ads or Trackers</div>
+
+    <p>
+      This Privacy Policy explains how <strong>Hamburg 274</strong> handles information on Android devices.
+      Hamburg 274 is engineered as a strictly offline concert grand piano instrument and classical practice studio.
+    </p>
+
+    <h2>1. On-Device Data vs. Cloud Data</h2>
+    <ul>
+      <li><strong>On-Device Local Data:</strong> App preferences (such as dismissal timestamps for Google Play update prompts), imported practice scores, and recorded MIDI/WAV takes remain exclusively on your device.</li>
+      <li><strong>Cloud Data:</strong> Hamburg 274 does <strong>not</strong> require an account, does <strong>not</strong> operate user tracking servers, and does <strong>not</strong> collect, sell, or transmit personal data to external servers.</li>
+    </ul>
+
+    <h2>2. Device Permissions &amp; Document Access</h2>
+    <p>
+      Hamburg 274 requests <strong>zero</strong> dangerous Android permissions (no microphone, camera, location, contacts, phone state, or broad media storage permissions).
+      When you explicitly choose to import a <code>.mid</code> or <code>.musicxml</code> file or export a <code>.mid</code> / 24-bit <code>.wav</code> recording, the app uses Android's built-in Storage Access Framework (SAF) strictly for the specific file you select.
+      Optional USB OTG and Bluetooth LE MIDI keyboards are accessed through Android's standard <code>MidiManager</code> API solely for real-time note and pedal playback.
+    </p>
+
+    <h2>3. Third-Party Services</h2>
+    <p>
+      Hamburg 274 integrates only the official <strong>Google Play In-App Updates</strong> library
+      (<code>com.google.android.play:app-update</code>) to check whether a newer app version is available on Google Play.
+      This interaction is governed by the <a href="https://policies.google.com/privacy" rel="noopener noreferrer">Google Privacy Policy</a>.
+    </p>
+
+    <h2>4. Ads &amp; Analytics</h2>
+    <p>
+      Hamburg 274 contains <strong>no advertisements</strong>, <strong>no ad SDKs</strong>, and <strong>no third-party behavioral analytics or crash-tracking SDKs</strong>.
+    </p>
+
+    <h2>5. Children's Privacy (COPPA / GDPR-K / Google Play Families)</h2>
+    <p>
+      Because Hamburg 274 does not collect personal information, does not display advertisements, and includes no social or chat features, it is safe for musicians and students of all ages, including children under 13.
+    </p>
+
+    <h2>6. Data Retention &amp; Deletion</h2>
+    <p>
+      All local settings and session takes reside solely on your device and can be deleted at any time by clearing the app's storage in Android Settings or uninstalling the app.
+      For complete deletion instructions, visit our <a href="./delete-account.html">Data Deletion Guide</a>.
+    </p>
+
+    <h2>7. Contact</h2>
+    <p>
+      If you have questions about this Privacy Policy, please contact the developer at
+      <a href="mailto:phoatman@gmail.com">phoatman@gmail.com</a>.
+    </p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,156 @@
+# Android App & Game Engineering & Google Play Publication Instructions (For AI Coding Agents)
+
+> **Usage:** Follow every rule in this document automatically whenever creating or updating an Android app or game (Native Kotlin/Java, Capacitor/WebView, React Native, or Flutter) unless explicitly overridden by the user.
+
+---
+
+## 1. Non-Negotiable Versioning Rules
+
+1. **Bump the version on EVERY code or asset edit** (never reuse an existing `versionCode` or `versionName`).
+2. Keep **all version sources synchronized** in the same turn:
+   - `android/app/build.gradle` (or `build.gradle.kts`):
+     - Increment `versionCode` by `+1` (strictly increasing integer required by Google Play).
+     - Increment `versionName` using Semantic Versioning (`MAJOR.MINOR.PATCH`: patch for fixes/polish, minor for new features, major for breaking/overhaul releases).
+   - `package.json` / `pubspec.yaml` (if hybrid/cross-platform): match `versionName` exactly.
+   - In-app version constant (e.g., `APP_VERSION_NAME`): display subtly in Settings or Menu footer.
+   - `docs/CHANGELOG.md` and `docs/PLAY_STORE_LISTING.md`: update latest release notes (`≤ 500 characters` for Play Console "What's new").
+3. **Never rename `applicationId` / package name** once established.
+4. Keep `targetSdk` compliant with current Google Play requirements (API 35+ for new releases) and `minSdk` practical (API 24+).
+
+---
+
+## 2. Automatic Google Play Store Listing & Compliance Docs
+
+Automatically create and maintain a `/docs/` directory (mirroring hosted HTML legal pages into `/public/` when applicable):
+
+### A. `docs/PLAY_STORE_LISTING.md`
+Include copy-ready, character-count-verified store text:
+- **App / Game Title**: `≤ 30 characters` (clean brand name, no keyword stuffing or spam emojis).
+- **Android Launcher Label (`strings.xml` `app_name`)**: Concise display name (`≤ 14–16 chars` ideal) so it never truncates under home-screen icons.
+- **Short Description**: `≤ 80 characters` — clear hook summarizing the core app value or gameplay loop.
+- **Full Description**: `≤ 4,000 characters` — structured with:
+  - 2-sentence hook
+  - Bulleted key features / gameplay highlights
+  - Offline / privacy / family-friendly highlights (e.g., no mandatory login, no intrusive ads)
+  - Controls & accessibility summary
+  - Zero prohibited claims, keyword stuffing, or fake awards
+- **Release Notes ("What's New")**: `≤ 500 characters` per release (`en-US`).
+- **Store Metadata**: App vs. Game, Primary Category, up to 5 Play Store Tags, Contact Email, Privacy Policy URL, Account/Data Deletion URL (if cloud accounts/profiles exist).
+- **Content Rating (IARC) Answers**: Accurate checklist covering violence, language, user interaction, personal info, in-app purchases, and ads.
+
+### B. `docs/PLAY_CONSOLE_GUIDE.md`
+Tailored publisher runbook covering:
+- Release signing via environment variables (`RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`) — never hardcode secrets or commit keystores.
+- Exact release `.aab` build & sync commands (e.g., `npm run build && npx cap sync android`, `./gradlew bundleRelease`).
+- **Data Safety Form** exact answers (collected/shared/ephemeral data types, encryption in transit, optional vs. required collection, deletion support).
+- **App Access / Reviewer Notes** (confirming core app/game works without login, or providing clear review steps).
+- **Target Audience & Families Policy** answers.
+- **Play Games Services / Firebase / OAuth** setup notes (SHA-1 & SHA-256 for both Upload Key and Play App Signing Key).
+
+### C. `docs/privacy-policy.html` (and `/public/privacy-policy.html`)
+Standalone, mobile-friendly HTML Privacy Policy ready to host:
+- App name, developer contact email, and last-updated date.
+- Clear breakdown of **on-device local data** vs. **optional cloud data**.
+- Third-party SDKs/services used (e.g., Firebase, Google Play Games Services) with policy links.
+- **Children's Privacy (COPPA / GDPR-K / Google Play Families)** section if under-13 users may play.
+- Accurate **Ads & Tracking** disclosure (e.g., zero ads/trackers, or Families-certified ad SDK disclosure).
+- **Data Retention & Deletion** section linking to `delete-account.html`.
+
+### D. `docs/delete-account.html` (and `/public/delete-account.html`)
+Required whenever the app allows accounts, sign-in, or cloud-saved profiles/leaderboards:
+- Step-by-step in-app account & cloud data deletion instructions.
+- Web/email fallback deletion instructions with contact email and SLA (e.g., within 7–30 days).
+- Exact breakdown of what is permanently deleted vs. retained (if anything).
+
+### E. `docs/CHANGELOG.md`
+Reverse-chronological history of every `versionName` (`versionCode`) and its user-facing changes.
+
+---
+
+## 3. Store Graphics & Native Android Assets
+
+Create and configure cohesive, brand-matched publication assets:
+- **Play Store Hi-Res Icon**: `512 × 512 px` PNG, bold focal emblem/character, readable at small sizes.
+- **Adaptive Launcher Icons**: All densities (`mdpi`–`xxxhdpi`: `ic_launcher`, `ic_launcher_round`, `ic_launcher_foreground`) + `mipmap-anydpi-v26` XML, keeping key artwork inside the inner `66%` safe zone.
+- **Feature Graphic**: `1024 × 500 px` clean key art + readable title with safe margins.
+- **Splash Screens**: Brand-matched background color across `drawable-port-*`, `drawable-land-*`, and Android 12+ `SplashScreen` theme (`values/styles.xml`) — no harsh white/black flash.
+- **Screenshot Plan**: Document 4–8 recommended Phone (`9:16` or `16:9`) and Tablet capture frames in `docs/PLAY_STORE_LISTING.md`.
+
+---
+
+## 4. Play Games Services v2 & Developer-Controlled Sign-In (No Auto Sign-In on Launch)
+
+Unless the user explicitly requires a login wall:
+1. **NEVER auto-initialize or prompt Play Games sign-in on launch**:
+   - In `AndroidManifest.xml`, add `xmlns:tools="http://schemas.android.com/tools"` and strip the SDK's automatic startup provider:
+     ```xml
+     <provider
+         android:name="com.google.android.gms.games.provider.PlayGamesInitProvider"
+         android:authorities="${applicationId}.playgamesinitprovider"
+         tools:node="remove" />
+     ```
+   - Do **NOT** call `PlayGamesSdk.initialize(this)` inside `Application.onCreate()` or `MainActivity.onCreate()`.
+   - Do **NOT** call `GamesSignInClient.isAuthenticated()` or `signIn()` on app startup.
+2. **Initialize lazily on manual trigger only**:
+   - Call `PlayGamesSdk.initialize(appContext)` inside the Play Games bridge **only** when the user manually taps **"Connect Play Games" / "Sign in with Google"** or triggers Cloud Save / Leaderboard sync.
+   - Store a local opt-in flag after a successful manual sign-in; only refresh `isAuthenticated()` when returning users manually open Profile or Leaderboard (never on launch, never in Under-13 mode).
+3. **Offline-First & Guest-First**:
+   - Core app/game must be **100% usable offline** with local storage and zero mandatory login.
+   - Seamlessly merge local guest progress when a user later connects an account (never lose progress or create duplicate entries).
+
+---
+
+## 5. Google Play In-App Update Notification Popup
+
+Include built-in Play Store update detection in every Android project:
+1. Add dependency in `android/app/build.gradle`:
+   ```groovy
+   implementation "com.google.android.play:app-update:2.1.0"
+   ```
+2. Implement native `AppUpdateManagerFactory` checks (using `com.google.android.gms.tasks.Task`):
+   - Check `UpdateAvailability.UPDATE_AVAILABLE` and `InstallStatus.DOWNLOADED` asynchronously after initial paint.
+   - Support **Flexible Updates** (`AppUpdateType.FLEXIBLE`) with `InstallStateUpdatedListener` progress reporting and `completeUpdate()` restart prompt once `InstallStatus.DOWNLOADED`.
+   - Fall back cleanly to `market://details?id=<packageName>` → `https://play.google.com/store/apps/details?id=<packageName>`.
+3. Show a brand-matched popup with **Update Now**, **View in Store**, and **Later** (24-hour dismissal cooldown per `availableVersionCode`; bypass immediately for newer versions or already-downloaded updates).
+4. Provide a manual **"Check for Updates"** option next to the version label in Settings / Menu.
+
+---
+
+## 6. Privacy, Families Policy & Simple Age Gate (When Applicable)
+
+For games or apps accessible to children (Mixed Audience / Families):
+1. Use a **simple, neutral 2-button age selector** (**Under 13** / **13 or older**) — never a long birth-year list, and never hint which option unlocks online features. Only ask when entering online/social features (not blocking offline play).
+2. **Under-13 Kid-Safe Mode**: Disable Google/Play Games sign-in, social cloud links, ad trackers, and free-text public usernames (use safe preset/generated names if needed).
+3. Include a collapsible **Privacy & Data Safety** disclosure inside Settings/Menu.
+
+---
+
+## 7. Profiles, Avatars & Database Security (If Applicable)
+
+1. **Built-in Avatars**: Prefer lightweight, **code-authored animated SVG/CSS cute creature/character avatars** (respecting `prefers-reduced-motion: reduce`), auto-assigning a random avatar on first launch with an in-app picker.
+2. **Unique Nicknames & Security Rules**:
+   - Enforce live case-insensitive username uniqueness while allowing users to keep their own name across guest-to-account upgrades.
+   - Harden backend rules (`firestore.rules` / APIs) with strict field allowlists (`hasOnly`), type/length validation, ownership checks, and zero wildcard open writes.
+
+---
+
+## 8. Android UX, Permissions & Security Hygiene
+
+- **Minimal Permissions**: Declare only strictly necessary permissions in `AndroidManifest.xml` (e.g., `INTERNET`, `VIBRATE`).
+- **Back Button & Safe Areas**: Handle Android Back cleanly (close modals → pause gameplay → confirm exit). Respect safe areas (`env(safe-area-inset-*)` / WindowInsets) with zero overflow or clipped buttons on `390×844` mobile and `1440×900` desktop.
+- **No Browser Dialogs**: Never use `window.alert`, `window.confirm`, or `window.prompt`; always use accessible in-app modals.
+- **Zero Hardcoded Secrets**: Keep API keys, OAuth secrets, and signing credentials strictly in server env vars or build environment variables.
+
+---
+
+## 9. Mandatory Pre-Finish Checklist (Run After Every Edit)
+
+Before finishing any coding turn, verify every item:
+- [ ] **Version bumped** across `android/app/build.gradle` (`versionCode` + `versionName`), `package.json` / `pubspec.yaml`, in-app version display, and `docs/CHANGELOG.md` / `docs/PLAY_STORE_LISTING.md`.
+- [ ] **Unit tests pass** for pure logic (game/app rules, update gating, auth gating, validation).
+- [ ] **Type-check, Lint & Production Build succeed** with zero errors.
+- [ ] **Android native project synced** (e.g., `npx cap sync android`).
+- [ ] **Backend / Firestore security rules linted & deployed** (if modified).
+- [ ] **Store & legal docs updated** (`PLAY_STORE_LISTING.md`, `PLAY_CONSOLE_GUIDE.md`, `privacy-policy.html`, `delete-account.html`) matching actual app behavior and character limits.
+- [ ] **No auto sign-in on launch** confirmed.
+- [ ] **Rendered UI verified** across desktop and mobile viewports with zero console errors or clipped UI.

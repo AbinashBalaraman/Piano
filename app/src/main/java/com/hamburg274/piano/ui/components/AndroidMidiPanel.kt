@@ -25,13 +25,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothAudio
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.Warning
+import com.hamburg274.piano.BuildConfig
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -88,6 +92,9 @@ fun AndroidMidiPanel(
     keepScreenOn: Boolean,
     onToggleKeepScreenOn: () -> Unit,
     onEnterSoundModuleMode: () -> Unit,
+    isCheckingUpdate: Boolean = false,
+    updateStatusMessage: String? = null,
+    onCheckForUpdates: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -95,6 +102,7 @@ fun AndroidMidiPanel(
     var maxTouchCount by remember { mutableIntStateOf(0) }
     var gestureStatus by remember { mutableStateOf(ThreeFingerStatus.IDLE) }
     var useInrCurrency by remember { mutableStateOf(false) }
+    var privacyExpanded by remember { mutableStateOf(false) }
 
     BoxWithConstraints(
         modifier = modifier
@@ -627,22 +635,110 @@ fun AndroidMidiPanel(
                     active = false
                 )
 
+                // Collapsible Privacy & Data Safety Disclosure + Version & Manual Update Check
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(ObsidianBg)
+                        .border(1.dp, VerifiedEmerald.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("privacy_disclosure_toggle")
+                            .clickable { privacyExpanded = !privacyExpanded },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Shield, contentDescription = null, tint = VerifiedEmerald, modifier = Modifier.size(16.dp))
+                            Text(
+                                text = "Privacy & Data Safety (100% Offline DSP)",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = VerifiedEmerald
+                            )
+                        }
+                        Icon(
+                            imageVector = if (privacyExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (privacyExpanded) "Collapse privacy details" else "Expand privacy details",
+                            tint = MutedStoneText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    if (privacyExpanded) {
+                        Text(
+                            text = "• No personal data collected, transmitted, or shared with third parties.\n" +
+                                "• Zero advertisements, zero analytics trackers, and zero mandatory sign-in.\n" +
+                                "• Zero microphone, camera, location, contacts, or storage permissions.\n" +
+                                "• Imported scores (.mid/.musicxml) and exported recordings (.mid/.wav) use Android's user-approved Storage Access Framework strictly on-device.\n" +
+                                "• Google Play In-App Updates checks Play Store availability only; no user identifiers leave your device.",
+                            fontSize = 11.sp,
+                            color = WarmSandText
+                        )
+                    }
+                }
+
+                // Subtle Version Footer & Manual "Check for Updates"
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(VerifiedEmerald.copy(alpha = 0.08f))
-                        .border(1.dp, VerifiedEmerald.copy(alpha = 0.35f), RoundedCornerShape(9.dp))
-                        .padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(ObsidianBg)
+                        .border(1.dp, BorderHairline, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 9.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Shield, contentDescription = null, tint = VerifiedEmerald, modifier = Modifier.size(16.dp))
-                    Text(
-                        text = stringResource(R.string.privacy_badge),
-                        fontSize = 11.sp,
-                        color = VerifiedEmerald
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Hamburg 274 · v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+                            fontFamily = JetBrainsMonoFamily,
+                            fontSize = 11.sp,
+                            color = MutedStoneText,
+                            modifier = Modifier.testTag("app_version_footer")
+                        )
+                        if (updateStatusMessage != null) {
+                            Text(
+                                text = updateStatusMessage,
+                                fontSize = 10.5.sp,
+                                color = ConcertBrassBright
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .testTag("check_for_updates_button")
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceControl)
+                            .border(1.dp, ConcertBrass.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                            .clickable(enabled = !isCheckingUpdate) { onCheckForUpdates() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SystemUpdate,
+                            contentDescription = null,
+                            tint = ConcertBrassBright,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = if (isCheckingUpdate) "Checking…" else "Check for Updates",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = ConcertBrassBright
+                        )
+                    }
                 }
             }
         }
